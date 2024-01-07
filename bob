@@ -1,1 +1,690 @@
-bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob bob 
+Predicting Survivors and Deaths in Car Accidents
+Project Made BY:
+-Shauqi AL Jabri     / 56j15128
+-Abdullah Bait Habda / 46S175
+Column Description
+weight → CaseWeight: If it's a statistical weight, this name reflects its role in analysis; if it's the vehicle's weight, it could be VehicleWeight.
+
+dead → SurvivalStatus: Clearly indicates whether the occupant survived the accident.(dead/alive)
+
+airbag → AirbagStatus: Reflects the presence and status of an airbag in the vehicle.(same)
+
+seatbelt → SeatbeltUsage: Indicates whether the occupant was using a seatbelt.(same)
+
+frontal → FrontalCollision: A clear binary indicator of whether the accident was a frontal collision.(same)
+
+sex → OccupantGender: Gender of the person involved in the accident.(same)
+
+ageOFocc → OccupantAge: The age of the occupant at the time of the accident.(age)
+
+yearacc → AccidentYear: The year when the accident occurred.(AccidentYear)
+
+yearVeh → VehicleYear: The model year of the vehicle involved.( VehicleYear)
+
+abcat → AirbagCategory: Classification of the airbag situation, like deployed or not.(AirbagDeployment)
+
+occRole → OccupantRole: Distinguishes between driver and passenger.(OccupantRole)
+
+injSeverity → InjurySeverity: Rank of injury severity sustained by the occupant.(InjurySeverity)
+
+importing packages and the dataset
+# NumPy is a powerful library for numerical computations in Python.
+import numpy as np
+
+# Pandas is a data manipulation library that provides data structures like DataFrame for easy data handling.
+import pandas as pd
+
+# scikit-learn's FactorAnalysis is used for dimensionality reduction using factor analysis.
+from sklearn.decomposition import FactorAnalysis
+
+# scikit-learn's f_regression is used for feature selection using ANOVA F-value.
+from sklearn.feature_selection import f_regression
+
+# Install the 'umap' library using pip
+!pip install umap --user
+
+# Upgrade the 'umap' library to the latest version using pip.
+!pip install umap --upgrade
+
+# mlxtend is a library that provides various tools for machine learning, including ExhaustiveFeatureSelector for wrapper-based feature selection.
+# Install mlxtend using pip before importing
+!pip install mlxtend
+from mlxtend.feature_selection import ExhaustiveFeatureSelector
+
+# scikit-learn's RandomForestRegressor is used for feature selection using embedded methods.
+from sklearn.ensemble import RandomForestRegressor
+
+# scikit-learn's train_test_split is used for splitting datasets into training and testing sets.
+from sklearn.model_selection import train_test_split
+
+# scikit-learn's LogisticRegression is used for logistic regression modeling.
+from sklearn.linear_model import LogisticRegression
+
+# scikit-learn's metrics module provides functions for evaluating model performance, including accuracy, classification report, and confusion matrix.
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+# scikit-learn's LinearRegression is used for linear regression modeling.
+from sklearn.linear_model import LinearRegression
+
+# Matplotlib is a plotting library for creating static, interactive, and animated visualizations in Python.
+import matplotlib.pyplot as plt
+
+# Seaborn is a data visualization library based on Matplotlib. It provides a high-level interface for drawing attractive statistical graphics.
+import seaborn as sns
+
+#library used to make interactive histograms
+import plotly.express as px
+
+from sklearn import preprocessing as p
+Requirement already satisfied: umap in c:\users\dizzi\appdata\roaming\python\python311\site-packages (0.1.1)
+Requirement already satisfied: umap in c:\users\dizzi\appdata\roaming\python\python311\site-packages (0.1.1)
+Requirement already satisfied: mlxtend in c:\users\dizzi\appdata\roaming\python\python311\site-packages (0.23.0)
+Requirement already satisfied: scipy>=1.2.1 in c:\users\dizzi\anaconda3\lib\site-packages (from mlxtend) (1.11.1)
+Requirement already satisfied: numpy>=1.16.2 in c:\users\dizzi\anaconda3\lib\site-packages (from mlxtend) (1.24.3)
+Requirement already satisfied: pandas>=0.24.2 in c:\users\dizzi\anaconda3\lib\site-packages (from mlxtend) (2.0.3)
+Requirement already satisfied: scikit-learn>=1.0.2 in c:\users\dizzi\anaconda3\lib\site-packages (from mlxtend) (1.3.0)
+Requirement already satisfied: matplotlib>=3.0.0 in c:\users\dizzi\anaconda3\lib\site-packages (from mlxtend) (3.7.2)
+Requirement already satisfied: joblib>=0.13.2 in c:\users\dizzi\anaconda3\lib\site-packages (from mlxtend) (1.2.0)
+Requirement already satisfied: contourpy>=1.0.1 in c:\users\dizzi\anaconda3\lib\site-packages (from matplotlib>=3.0.0->mlxtend) (1.0.5)
+Requirement already satisfied: cycler>=0.10 in c:\users\dizzi\anaconda3\lib\site-packages (from matplotlib>=3.0.0->mlxtend) (0.11.0)
+Requirement already satisfied: fonttools>=4.22.0 in c:\users\dizzi\anaconda3\lib\site-packages (from matplotlib>=3.0.0->mlxtend) (4.25.0)
+Requirement already satisfied: kiwisolver>=1.0.1 in c:\users\dizzi\anaconda3\lib\site-packages (from matplotlib>=3.0.0->mlxtend) (1.4.4)
+Requirement already satisfied: packaging>=20.0 in c:\users\dizzi\anaconda3\lib\site-packages (from matplotlib>=3.0.0->mlxtend) (23.1)
+Requirement already satisfied: pillow>=6.2.0 in c:\users\dizzi\anaconda3\lib\site-packages (from matplotlib>=3.0.0->mlxtend) (9.4.0)
+Requirement already satisfied: pyparsing<3.1,>=2.3.1 in c:\users\dizzi\anaconda3\lib\site-packages (from matplotlib>=3.0.0->mlxtend) (3.0.9)
+Requirement already satisfied: python-dateutil>=2.7 in c:\users\dizzi\anaconda3\lib\site-packages (from matplotlib>=3.0.0->mlxtend) (2.8.2)
+Requirement already satisfied: pytz>=2020.1 in c:\users\dizzi\anaconda3\lib\site-packages (from pandas>=0.24.2->mlxtend) (2023.3.post1)
+Requirement already satisfied: tzdata>=2022.1 in c:\users\dizzi\anaconda3\lib\site-packages (from pandas>=0.24.2->mlxtend) (2023.3)
+Requirement already satisfied: threadpoolctl>=2.0.0 in c:\users\dizzi\anaconda3\lib\site-packages (from scikit-learn>=1.0.2->mlxtend) (2.2.0)
+Requirement already satisfied: six>=1.5 in c:\users\dizzi\anaconda3\lib\site-packages (from python-dateutil>=2.7->matplotlib>=3.0.0->mlxtend) (1.16.0)
+#import the dataset into a dataframe using pandas
+carac= pd.read_csv('train-new.csv')
+Cleaning Data
+#checking for any missing values in teh dataset
+carac.isnull().sum()
+dvcat          0
+weight         0
+dead           0
+airbag         0
+seatbelt       0
+frontal        0
+sex            0
+ageOFocc       0
+yearacc        0
+yearVeh        0
+abcat          0
+occRole        0
+deploy         0
+caseid         0
+injSeverity    0
+dtype: int64
+droping unnecessarily columns
+carac=carac.drop('caseid',axis=1)
+carac = carac.drop('dvcat', axis=1)
+carac = carac.drop('weight', axis=1)
+carac = carac.drop('deploy', axis=1)
+carac
+dead	airbag	seatbelt	frontal	sex	ageOFocc	yearacc	yearVeh	abcat	occRole	injSeverity
+0	dead	airbag	belted	1	f	48	2002	1997	deploy	driver	3
+1	alive	none	none	1	m	26	2001	1968	unavail	driver	3
+2	alive	none	none	1	f	51	2002	1994	unavail	driver	3
+3	alive	airbag	belted	1	m	27	1998	1996	deploy	pass	3
+4	alive	airbag	belted	0	m	26	2002	1997	nodeploy	pass	0
+...	...	...	...	...	...	...	...	...	...	...	...
+17560	alive	airbag	belted	0	m	28	2002	1997	deploy	driver	0
+17561	alive	none	belted	1	f	39	1998	1987	unavail	driver	1
+17562	alive	airbag	belted	1	f	29	1997	1988	deploy	driver	3
+17563	alive	none	none	1	f	22	2000	1990	unavail	driver	3
+17564	alive	none	belted	1	m	19	2002	1987	unavail	pass	0
+17565 rows × 11 columns
+
+changing columns names
+carac.rename(columns={'dead': 'DeadOrAlive', 'ageOFocc': 'Age','yearacc':'AccidentYear','yearVeh':'model','abcat':'AirbagDeployment','occRole':'OccupantRole','injSeverity':'InjurySeverity'}, inplace=True)
+carac
+DeadOrAlive	airbag	seatbelt	frontal	sex	Age	AccidentYear	model	AirbagDeployment	OccupantRole	InjurySeverity
+0	dead	airbag	belted	1	f	48	2002	1997	deploy	driver	3
+1	alive	none	none	1	m	26	2001	1968	unavail	driver	3
+2	alive	none	none	1	f	51	2002	1994	unavail	driver	3
+3	alive	airbag	belted	1	m	27	1998	1996	deploy	pass	3
+4	alive	airbag	belted	0	m	26	2002	1997	nodeploy	pass	0
+...	...	...	...	...	...	...	...	...	...	...	...
+17560	alive	airbag	belted	0	m	28	2002	1997	deploy	driver	0
+17561	alive	none	belted	1	f	39	1998	1987	unavail	driver	1
+17562	alive	airbag	belted	1	f	29	1997	1988	deploy	driver	3
+17563	alive	none	none	1	f	22	2000	1990	unavail	driver	3
+17564	alive	none	belted	1	m	19	2002	1987	unavail	pass	0
+17565 rows × 11 columns
+
+# Export the DataFrame to CSV
+carac.to_csv('part1.csv', index=False)
+searching for outliers
+Finding out the Outliers
+#finding the outliers in this dataset
+#creating a function to find lower limit and upper limit using IQR
+def outlier(col):
+    Q1 = carac[col].quantile(0.25)
+    Q2 = carac[col].quantile(0.50)
+    Q3 = carac[col].quantile(0.75)
+    IQR = Q3 - Q1
+    LW = Q1 - 1.5*IQR
+    UP = Q3 + 1.5*IQR
+    return LW, UP
+La,Ua= outlier('Age')
+print('Upper value = ', Ua)
+print('Lower value = ', La)
+Upper value =  87.0
+Lower value =  -17.0
+carac[~(carac['Age'].between(La,Ua))]
+DeadOrAlive	airbag	seatbelt	frontal	sex	Age	AccidentYear	model	AirbagDeployment	OccupantRole	InjurySeverity
+153	alive	airbag	belted	0	m	90	1999	1993	deploy	driver	2
+346	alive	none	belted	1	m	88	1999	1990	unavail	driver	0
+1399	alive	none	belted	0	m	88	1997	1982	unavail	driver	3
+1620	alive	none	none	0	f	97	2000	1988	unavail	driver	5
+1688	alive	none	belted	0	f	91	1997	1983	unavail	driver	0
+...	...	...	...	...	...	...	...	...	...	...	...
+15738	dead	airbag	none	1	m	88	1999	1995	deploy	driver	3
+16059	alive	none	belted	0	f	89	2001	1993	unavail	pass	2
+16095	alive	airbag	belted	0	m	88	2002	1993	nodeploy	driver	2
+16766	alive	airbag	belted	0	f	93	2000	1993	deploy	driver	2
+17026	alive	airbag	belted	1	m	89	2002	1999	deploy	driver	1
+75 rows × 11 columns
+
+Lay,Uay = outlier('AccidentYear')
+print('Upper value = ', Uay)
+print('Lower value = ', Lay)
+Upper value =  2005.5
+Lower value =  1993.5
+carac[~(carac['AccidentYear'].between(Lay,Uay))]
+DeadOrAlive	airbag	seatbelt	frontal	sex	Age	AccidentYear	model	AirbagDeployment	OccupantRole	InjurySeverity
+Lm,Um = outlier('model')
+print('Upper value = ', Um)
+print('Lower value = ', Lm)
+Upper value =  2009.0
+Lower value =  1977.0
+carac[~(carac['model'].between(Um,Lm))]
+DeadOrAlive	airbag	seatbelt	frontal	sex	Age	AccidentYear	model	AirbagDeployment	OccupantRole	InjurySeverity
+0	dead	airbag	belted	1	f	48	2002	1997	deploy	driver	3
+1	alive	none	none	1	m	26	2001	1968	unavail	driver	3
+2	alive	none	none	1	f	51	2002	1994	unavail	driver	3
+3	alive	airbag	belted	1	m	27	1998	1996	deploy	pass	3
+4	alive	airbag	belted	0	m	26	2002	1997	nodeploy	pass	0
+...	...	...	...	...	...	...	...	...	...	...	...
+17560	alive	airbag	belted	0	m	28	2002	1997	deploy	driver	0
+17561	alive	none	belted	1	f	39	1998	1987	unavail	driver	1
+17562	alive	airbag	belted	1	f	29	1997	1988	deploy	driver	3
+17563	alive	none	none	1	f	22	2000	1990	unavail	driver	3
+17564	alive	none	belted	1	m	19	2002	1987	unavail	pass	0
+17565 rows × 11 columns
+
+carac['Age'].describe()# max age is under 97 min age is 16 which is aceptable
+count    17565.000000
+mean        37.212411
+std         17.945232
+min         16.000000
+25%         22.000000
+50%         33.000000
+75%         48.000000
+max         97.000000
+Name: Age, dtype: float64
+carac['AccidentYear'].describe() # max year was 2002 min year was 1997
+count    17565.000000
+mean      1999.558497
+std          1.702162
+min       1997.000000
+25%       1998.000000
+50%       2000.000000
+75%       2001.000000
+max       2002.000000
+Name: AccidentYear, dtype: float64
+Testing for outliers if logical or not
+fig = px.box(carac,x='AccidentYear', y='model', title='model vs AccidentYear Distribution')
+fig.show()
+carac[carac['model'] == carac['model'].max()]#this seems illogical car model cannot be 2003 and the accedent happe
+DeadOrAlive	airbag	seatbelt	frontal	sex	Age	AccidentYear	model	AirbagDeployment	OccupantRole	InjurySeverity
+2009	alive	airbag	none	0	f	53	2002	2003	nodeploy	pass	2
+2508	alive	airbag	belted	1	m	66	2002	2003	deploy	driver	3
+2885	alive	airbag	belted	1	f	26	2002	2003	deploy	pass	0
+4507	alive	airbag	belted	0	m	42	2002	2003	nodeploy	driver	0
+6067	alive	airbag	belted	0	f	30	2002	2003	nodeploy	driver	3
+6696	alive	airbag	belted	0	m	67	2002	2003	nodeploy	driver	0
+6743	alive	airbag	belted	1	m	56	2002	2003	nodeploy	driver	0
+7389	alive	airbag	belted	0	m	36	2002	2003	nodeploy	driver	0
+8464	alive	airbag	none	1	m	23	2002	2003	deploy	driver	1
+9232	alive	airbag	belted	0	m	33	2002	2003	nodeploy	driver	1
+10237	alive	airbag	belted	0	m	33	2002	2003	nodeploy	driver	0
+10388	alive	airbag	belted	1	f	34	2002	2003	deploy	driver	1
+10814	alive	airbag	belted	1	m	36	2002	2003	deploy	driver	1
+13402	alive	airbag	none	0	m	42	2002	2003	nodeploy	driver	3
+13567	alive	airbag	belted	1	m	22	2002	2003	nodeploy	driver	0
+14205	alive	airbag	belted	0	m	34	2002	2003	nodeploy	pass	2
+14652	alive	airbag	belted	1	f	27	2002	2003	nodeploy	driver	0
+15251	alive	airbag	belted	0	m	35	2002	2003	nodeploy	driver	0
+15441	alive	airbag	belted	0	f	28	2002	2003	nodeploy	pass	1
+16856	alive	airbag	belted	1	m	33	2002	2003	deploy	driver	0
+16980	alive	airbag	none	0	m	43	2002	2003	nodeploy	driver	3
+17413	alive	airbag	belted	1	f	39	2002	2003	deploy	driver	3
+ 
+# Exclude rows where the 'model' year is the maximum year
+carac = carac[carac['model'] != carac['model'].max()]
+carac[carac['model'] != carac['model'].max()]
+DeadOrAlive	airbag	seatbelt	frontal	sex	Age	AccidentYear	model	AirbagDeployment	OccupantRole	InjurySeverity
+0	dead	airbag	belted	1	f	48	2002	1997	deploy	driver	3
+1	alive	none	none	1	m	26	2001	1968	unavail	driver	3
+2	alive	none	none	1	f	51	2002	1994	unavail	driver	3
+3	alive	airbag	belted	1	m	27	1998	1996	deploy	pass	3
+4	alive	airbag	belted	0	m	26	2002	1997	nodeploy	pass	0
+...	...	...	...	...	...	...	...	...	...	...	...
+17560	alive	airbag	belted	0	m	28	2002	1997	deploy	driver	0
+17561	alive	none	belted	1	f	39	1998	1987	unavail	driver	1
+17562	alive	airbag	belted	1	f	29	1997	1988	deploy	driver	3
+17563	alive	none	none	1	f	22	2000	1990	unavail	driver	3
+17564	alive	none	belted	1	m	19	2002	1987	unavail	pass	0
+17543 rows × 11 columns
+
+carac['Age'].describe()# max age is under 97 min age is 16 which is aceptable
+carac['AccidentYear'].describe() # max year was 2002 min year was 1997
+carac['model'].describe() # max year was 2003 min year was 1953
+count    17543.000000
+mean      1992.831158
+std          5.560695
+min       1953.000000
+25%       1989.000000
+50%       1994.000000
+75%       1997.000000
+max       2002.000000
+Name: model, dtype: float64
+fig = px.box(carac, y='Age', title='Age Distribution')
+fig.show()
+All outliers are logical !
+correlations and charts
+le=p.LabelEncoder()
+carac.DeadOrAlive=le.fit_transform(carac.DeadOrAlive)
+C:\Users\dizzi\AppData\Local\Temp\ipykernel_20296\2125386660.py:1: SettingWithCopyWarning:
+
+
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+
+carac.airbag=le.fit_transform(carac.airbag)
+C:\Users\dizzi\AppData\Local\Temp\ipykernel_20296\2896512583.py:1: SettingWithCopyWarning:
+
+
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+
+carac.seatbelt=le.fit_transform(carac.seatbelt)
+C:\Users\dizzi\AppData\Local\Temp\ipykernel_20296\1587606021.py:1: SettingWithCopyWarning:
+
+
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+
+carac.sex=le.fit_transform(carac.sex)
+C:\Users\dizzi\AppData\Local\Temp\ipykernel_20296\77207356.py:1: SettingWithCopyWarning:
+
+
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+
+carac.AirbagDeployment=le.fit_transform(carac.AirbagDeployment)
+C:\Users\dizzi\AppData\Local\Temp\ipykernel_20296\39712706.py:1: SettingWithCopyWarning:
+
+
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+
+carac.OccupantRole=le.fit_transform(carac.OccupantRole)
+C:\Users\dizzi\AppData\Local\Temp\ipykernel_20296\3071469974.py:1: SettingWithCopyWarning:
+
+
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+
+#viewing the dataframe after turning the values into ones and zeros
+carac
+DeadOrAlive	airbag	seatbelt	frontal	sex	Age	AccidentYear	model	AirbagDeployment	OccupantRole	InjurySeverity
+0	1	0	0	1	0	48	2002	1997	0	0	3
+1	0	1	1	1	1	26	2001	1968	2	0	3
+2	0	1	1	1	0	51	2002	1994	2	0	3
+3	0	0	0	1	1	27	1998	1996	0	1	3
+4	0	0	0	0	1	26	2002	1997	1	1	0
+...	...	...	...	...	...	...	...	...	...	...	...
+17560	0	0	0	0	1	28	2002	1997	0	0	0
+17561	0	1	0	1	0	39	1998	1987	2	0	1
+17562	0	0	0	1	0	29	1997	1988	0	0	3
+17563	0	1	1	1	0	22	2000	1990	2	0	3
+17564	0	1	0	1	1	19	2002	1987	2	1	0
+17543 rows × 11 columns
+
+#correlation coefficients betweens columns using heatmap
+caracCo = carac.corr()
+sns.heatmap(caracCo, annot=True, cmap='coolwarm', fmt='.2f')
+plt.title('Correlation Heatmap')
+plt.show()
+
+#use EFS to find best column
+#exhaustive feature selection
+#discetion tree
+
+by cerating a heatmap using the seaborn library we can see a visual representation of the correlation matrix of all teh factors.
+
+the correlation is messured using a number from -1 to 1.
+
+-1 means that theres a negative correlations which means if one column increases the other one decreases.
+
+1 means theres a postive correlation which means that when one column increases the other one increases with it.
+
+in this heatmap it indecates that people who are alive after a a car accident have less severe injuries compared to the ones that have died where they tend to have worse injuries.
+
+also it indecates that the newer the car is the hgiher the chance of airbag deployment to happen.
+
+carac.corr()
+DeadOrAlive	airbag	seatbelt	frontal	sex	Age	AccidentYear	model	AirbagDeployment	OccupantRole	InjurySeverity
+DeadOrAlive	1.000000	0.046093	0.135452	-0.061402	0.038375	0.081152	-0.017848	-0.047624	0.028324	0.011823	0.365495
+airbag	0.046093	1.000000	0.155165	0.059357	0.091087	-0.053363	-0.202964	-0.753935	0.911714	0.068705	0.077451
+seatbelt	0.135452	0.155165	1.000000	0.065775	0.116936	-0.077937	-0.037252	-0.172446	0.117752	0.057747	0.254833
+frontal	-0.061402	0.059357	0.065775	1.000000	0.069089	-0.047993	0.018055	-0.021843	-0.093868	-0.041069	-0.020084
+sex	0.038375	0.091087	0.116936	0.069089	1.000000	-0.048814	-0.006834	-0.101813	0.070129	-0.103412	-0.037043
+Age	0.081152	-0.053363	-0.077937	-0.047993	-0.048814	1.000000	-0.006480	0.019478	-0.035891	-0.063046	0.086213
+AccidentYear	-0.017848	-0.202964	-0.037252	0.018055	-0.006834	-0.006480	1.000000	0.295075	-0.179981	-0.001869	-0.037907
+model	-0.047624	-0.753935	-0.172446	-0.021843	-0.101813	0.019478	0.295075	1.000000	-0.686248	-0.002431	-0.074345
+AirbagDeployment	0.028324	0.911714	0.117752	-0.093868	0.070129	-0.035891	-0.179981	-0.686248	1.000000	0.082125	0.009979
+OccupantRole	0.011823	0.068705	0.057747	-0.041069	-0.103412	-0.063046	-0.001869	-0.002431	0.082125	1.000000	-0.002298
+InjurySeverity	0.365495	0.077451	0.254833	-0.020084	-0.037043	0.086213	-0.037907	-0.074345	0.009979	-0.002298	1.000000
+import plotly.express as px
+fig = px.histogram(carac, x='Age', title='Age Distribution of Occupants')
+fig.show()
+This histogram shows how many people of different ages were in car accidents. Most people in accidents are around 20 years old. As people get older, there are fewer of them in accidents. There are not many people over 70 years old in car accidents.
+# Create subplots
+fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(8, 10))
+
+# Plot the bar chart for Dead counts (target value = 0) on the first subplot
+target_value_0_data = carac[carac['DeadOrAlive'] == 0]
+grouped_data_0 = target_value_0_data['InjurySeverity'].value_counts().sort_index()
+labels_0 = [f'Rank {rank}' for rank in grouped_data_0.index]
+colors_0 = plt.cm.viridis(grouped_data_0.index / max(grouped_data_0.index))
+axes[0].bar(labels_0, grouped_data_0, color=colors_0)
+axes[0].set_xlabel('Injury Severity')
+axes[0].set_ylabel('Count')
+axes[0].set_title(f'Bar Chart of Alive Count by Injury Severity')
+
+# Plot the bar chart for Dead counts (target value = 1) on the second subplot
+target_value_1_data = carac[carac['DeadOrAlive'] == 1]
+grouped_data_1 = target_value_1_data['InjurySeverity'].value_counts().sort_index()
+labels_1 = [f'Rank {rank}' for rank in grouped_data_1.index]
+colors_1 = plt.cm.viridis(grouped_data_1.index / max(grouped_data_1.index))
+axes[1].bar(labels_1, grouped_data_1, color=colors_1)
+axes[1].set_xlabel('Injury Severity')
+axes[1].set_ylabel('Count')
+axes[1].set_title(f'Bar Chart of Dead Count by Injury Severity ')
+
+# Adjust layout
+plt.show()
+
+these two bar charts show us the injury severity of both the ones who have died and the ones who got to live after the accidents and clearly it shows that the ones who have died have delt with sever injuries compared to ones who loved who had less injuries
+
+# Create subplots
+plt.figure(figsize=(12, 5))
+
+# Plot the pie chart for Dead counts (target value = 0)
+plt.subplot(1, 2, 1)
+target_value = 0
+filtered_data = carac[carac['DeadOrAlive'] == target_value]
+grouped_data = filtered_data['seatbelt'].value_counts().sort_index()
+labels = ['seatbelt', 'no seatbelt']
+plt.pie(grouped_data, labels=labels, autopct='%1.1f%%', startangle=140)
+plt.axis('equal')
+plt.title(f'seatbelt Distribution for Dead')
+
+# Plot the pie chart for Dead counts (target value = 1)
+plt.subplot(1, 2, 2)
+target_value = 1
+filtered_data = carac[carac['DeadOrAlive'] == target_value]
+grouped_data = filtered_data['seatbelt'].value_counts().sort_index()
+labels = ['no seatbelt', 'seatbelt']
+plt.pie(grouped_data, labels=labels, autopct='%1.1f%%', startangle=140)
+plt.axis('equal')
+plt.title(f'seatbelt Distribution for Alive')
+
+# Adjust layout
+plt.tight_layout()
+plt.show()
+
+from these pie charts that we have made where it shows it two pie charts, one for the people that have died and one for the people that survived, we can see that the a bigger portion of the people that wore seatbelt have survived while the ones that have died mostly didn't wear a seatbelt.
+
+# Ensure all AirbagDeployment values are considered
+categories = [0, 1, 2]
+
+# Group by "model" and "AirbagDeployment" and sum the counts
+grouped_data = carac.groupby(['model', 'AirbagDeployment']).size().unstack(fill_value=0)
+
+# Plot the stacked bar chart
+ax = grouped_data.plot(kind='bar', stacked=True, figsize=(12, 6))
+
+# Add labels, legend, and title
+plt.ylabel('Count')
+plt.xlabel('Model Year')
+plt.title('AirbagDeployment Distribution for Different Car Models')
+
+# Creating legend
+legend_labels = {0: 'Not Available', 1: 'Not Deployed', 2: 'Deployed'}
+handles, _ = ax.get_legend_handles_labels()
+ax.legend([handles[i] for i in [0, 1, 2]], [legend_labels[i] for i in [0, 1, 2]], title='Airbag Deployment', loc='upper left', bbox_to_anchor=(1, 1))
+
+# Adjust layout
+plt.tight_layout()
+plt.show()
+
+from the following stacked bar chart it shows us the count of the airbag status in an accident for each model year of cars the insight we got from this chart is that the older the car model is the less teh chance an airbag deployment occurs or the newer the car is the more reliable the airbag becomes.
+
+scatter_fig = px.scatter(carac, x='Age', y='InjurySeverity', color='DeadOrAlive', title='Age vs Injury Severity by Survival Status')
+scatter_fig.show()
+carac[carac['InjurySeverity'] == 6]
+DeadOrAlive	airbag	seatbelt	frontal	sex	Age	AccidentYear	model	AirbagDeployment	OccupantRole	InjurySeverity
+16789	0	0	0	1	1	57	1997	1996	0	0	6
+this interactive graph shows the Age and Injury Severity by Survival Status
+Feature selection
+in this section we are going to perform a process for selecting the importent features to give the machine to learn algorithems. this step is importent due to it helping us with reducing the number of input variables and getting rid of irrelevent features so the machine learning model can be as effeciant and as fast as possible.
+
+#move all columns to x except for the target column 
+#moving the target column to y
+x=carac.iloc[:,1:]
+y=carac[['DeadOrAlive']]
+x
+airbag	seatbelt	frontal	sex	Age	AccidentYear	model	AirbagDeployment	OccupantRole	InjurySeverity
+0	0	0	1	0	48	2002	1997	0	0	3
+1	1	1	1	1	26	2001	1968	2	0	3
+2	1	1	1	0	51	2002	1994	2	0	3
+3	0	0	1	1	27	1998	1996	0	1	3
+4	0	0	0	1	26	2002	1997	1	1	0
+...	...	...	...	...	...	...	...	...	...	...
+17560	0	0	0	1	28	2002	1997	0	0	0
+17561	1	0	1	0	39	1998	1987	2	0	1
+17562	0	0	1	0	29	1997	1988	0	0	3
+17563	1	1	1	0	22	2000	1990	2	0	3
+17564	1	0	1	1	19	2002	1987	2	1	0
+17543 rows × 10 columns
+
+y
+DeadOrAlive
+0	1
+1	0
+2	0
+3	0
+4	0
+...	...
+17560	0
+17561	0
+17562	0
+17563	0
+17564	0
+17543 rows × 1 columns
+
+fa=FactorAnalysis(n_components=3)
+fa_x=fa.fit_transform(x)
+new_x=pd.DataFrame(fa_x,columns=['f1','f2','f3'])
+new_x
+f1	f2	f3
+0	0.620658	-1.148705	-0.644359
+1	-0.643056	1.083347	-1.113311
+2	0.747606	1.075664	-0.245274
+3	-0.547087	-1.205217	-0.722658
+4	-0.616761	-0.367566	1.819953
+...	...	...	...
+17538	-0.491284	-1.211461	-0.258603
+17539	0.080650	1.061197	-0.351038
+17540	-0.435496	-1.174482	-0.995253
+17541	-0.864015	0.997155	-0.354875
+17542	-1.031745	0.994510	-0.207257
+17543 rows × 3 columns
+
+fr=f_regression(x,y)[0]
+fr
+C:\Users\dizzi\anaconda3\Lib\site-packages\sklearn\utils\validation.py:1184: DataConversionWarning:
+
+A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples, ), for example using ravel().
+
+array([3.73464559e+01, 3.27844113e+02, 6.63829055e+01, 2.58700089e+01,
+       1.16283488e+02, 5.58922204e+00, 3.98748804e+01, 1.40839879e+01,
+       2.45228960e+00, 2.70453359e+03])
+fdf=pd.DataFrame({"feature":x.columns,'f_score':fr})
+fdf
+feature	f_score
+0	airbag	37.346456
+1	seatbelt	327.844113
+2	frontal	66.382905
+3	sex	25.870009
+4	Age	116.283488
+5	AccidentYear	5.589222
+6	model	39.874880
+7	AirbagDeployment	14.083988
+8	OccupantRole	2.452290
+9	InjurySeverity	2704.533588
+#ranking every feature through F score
+fdf = fdf.sort_values('f_score',ascending=False)
+fdf
+feature	f_score
+9	InjurySeverity	2704.533588
+1	seatbelt	327.844113
+4	Age	116.283488
+2	frontal	66.382905
+6	model	39.874880
+0	airbag	37.346456
+3	sex	25.870009
+7	AirbagDeployment	14.083988
+5	AccidentYear	5.589222
+8	OccupantRole	2.452290
+#reducing features and only keeping the best 5
+X1 = x[fdf.iloc[:5,0]]
+X1
+InjurySeverity	seatbelt	Age	frontal	model
+0	3	0	48	1	1997
+1	3	1	26	1	1968
+2	3	1	51	1	1994
+3	3	0	27	1	1996
+4	0	0	26	0	1997
+...	...	...	...	...	...
+17560	0	0	28	0	1997
+17561	1	0	39	1	1987
+17562	3	0	29	1	1988
+17563	3	1	22	1	1990
+17564	0	0	19	1	1987
+17543 rows × 5 columns
+
+Ir=LinearRegression()
+efs=ExhaustiveFeatureSelector(estimator=Ir,scoring='r2',max_features=8)
+#no need to run this block again since we already have the resaults and it takes too much time
+efs.fit(x,y)
+Features: 1012/1012
+ExhaustiveFeatureSelector
+estimator: LinearRegression
+
+LinearRegression
+efs.best_feature_names_
+('airbag',
+ 'seatbelt',
+ 'frontal',
+ 'sex',
+ 'Age',
+ 'OccupantRole',
+ 'InjurySeverity')
+x2=x[list(efs.best_feature_names_)]
+x2
+airbag	seatbelt	frontal	sex	Age	OccupantRole	InjurySeverity
+0	0	0	1	0	48	0	3
+1	1	1	1	1	26	0	3
+2	1	1	1	0	51	0	3
+3	0	0	1	1	27	1	3
+4	0	0	0	1	26	1	0
+...	...	...	...	...	...	...	...
+17560	0	0	0	1	28	0	0
+17561	1	0	1	0	39	0	1
+17562	0	0	1	0	29	0	3
+17563	1	1	1	0	22	0	3
+17564	1	0	1	1	19	1	0
+17543 rows × 7 columns
+
+#making the training and testing variables
+X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+#using Logistic Regresson since our data set has a lot of binery values
+#we are also predecting a binery feature which is Dead/Alive
+model = LogisticRegression()
+model.fit(X_train, y_train)
+C:\Users\dizzi\anaconda3\Lib\site-packages\sklearn\utils\validation.py:1184: DataConversionWarning:
+
+A column-vector y was passed when a 1d array was expected. Please change the shape of y to (n_samples, ), for example using ravel().
+
+
+LogisticRegression
+LogisticRegression()
+y_pred = model.predict(X_test)
+y_pred
+array([0, 0, 0, ..., 0, 0, 0])
+accuracy = accuracy_score(y_test, y_pred)
+print(f'Accuracy: {accuracy:.2f}')
+
+print('Classification Report:')
+print(classification_report(y_test, y_pred))
+
+print('Confusion Matrix:')
+print(confusion_matrix(y_test, y_pred))
+Accuracy: 0.99
+Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.99      0.99      0.99      3346
+           1       0.89      0.90      0.89       163
+
+    accuracy                           0.99      3509
+   macro avg       0.94      0.95      0.94      3509
+weighted avg       0.99      0.99      0.99      3509
+
+Confusion Matrix:
+[[3328   18]
+ [  17  146]]
+based on the confusion matrix we have found the following
+True Negatives (TN):
+3328 is the number of instances that were correctly predicted as the negative class.
+
+False Positives (FP):
+18 This is the number of instances that were actually negative but were incorrectly predicted as positive.
+
+False Negatives (FN):
+17 This is the number of instances that were actually positive but were incorrectly predicted as negative.
+
+True Positives (TP):
+146 This is the number of instances that were correctly predicted as the positive class.
+
+ 
